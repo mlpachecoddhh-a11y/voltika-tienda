@@ -1,0 +1,11 @@
+{
+  "name": "voltika-tienda",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Tienda web de Voltika: electricidad, automatización e impresión 3D (Ushuaia).",
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@vercel/blob": "2.8.0"
+  }
+}
