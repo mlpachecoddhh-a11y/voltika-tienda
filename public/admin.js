@@ -19,7 +19,7 @@
   function showLogin(msg) {
     $("#adminView").hidden = true; $("#loginView").hidden = false;
     const e = $("#lErr"); e.hidden = !msg; e.textContent = msg || "";
-    $("#lPass").value = ""; $("#lUser").focus();
+    $("#lPass").value = ""; $("#lPass").type = "password"; $("#lUser").focus();
   }
   $("#loginForm").addEventListener("submit", async ev => {
     ev.preventDefault();
@@ -31,6 +31,7 @@
     if (!r.ok) { showLogin(r.body.error || "No se pudo ingresar."); return; }
     start(true);
   });
+  $("#lShow").onclick = () => { const i = $("#lPass"), v = i.type === "password"; i.type = v ? "text" : "password"; $("#lShow").setAttribute("aria-label", v ? "Ocultar contraseña" : "Mostrar contraseña"); $("#lShow").textContent = v ? "🙈" : "👁"; };
   $("#aLogout").onclick = async () => {
     if (dirty && !$("#aLogout").dataset.sure) { $("#aLogout").dataset.sure = "1"; toast("Tenés cambios sin publicar. Tocá Salir de nuevo para salir igual."); setTimeout(() => delete $("#aLogout").dataset.sure, 4000); return; }
     await api("/api/logout", { method: "POST" }); dirty = false; showLogin("");

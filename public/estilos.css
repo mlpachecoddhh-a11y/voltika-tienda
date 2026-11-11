@@ -242,3 +242,5 @@ legend{font-weight:600;font-size:.85rem;margin-bottom:6px}
 .who b{color:var(--neon)}
 .admin.page{position:static;min-height:100vh;padding:0}
 .a-bar{top:env(safe-area-inset-top,0px)}
+
+.pw{position:relative;display:block}.pw input{padding-right:46px}.pw button{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:38px;height:38px;border:0;background:transparent;font-size:1.1rem;cursor:pointer}

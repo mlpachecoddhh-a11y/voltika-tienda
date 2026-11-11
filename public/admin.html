@@ -32,7 +32,7 @@
     </div>
     <form id="loginForm" novalidate>
       <label for="lUser">Usuario<input id="lUser" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
-      <label for="lPass">Contraseña<input id="lPass" type="password" autocomplete="current-password" required></label>
+      <label for="lPass">Contraseña<span class="pw"><input id="lPass" type="password" autocomplete="current-password" autocapitalize="none" spellcheck="false" required><button type="button" id="lShow" aria-label="Mostrar contraseña">👁</button></span></label>
       <div class="err" id="lErr" hidden></div>
       <button class="btn lime" type="submit" id="lBtn" style="justify-content:center">Ingresar</button>
       <a href="/" style="font-size:.85rem;color:var(--muted);text-align:center">Volver a la tienda</a>
