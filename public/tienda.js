@@ -29,6 +29,41 @@
     document.querySelectorAll("[data-phone]").forEach(el => el.textContent = cfg().telefono);
   }
   $("#filters").addEventListener("click", e => { const c = e.target.closest("[data-f]"); if (!c) return; filtro = c.dataset.f; renderCatalog(); });
+
+  /* ---------- Menú lateral ---------- */
+  const menu = $("#menu"), mScrim = $("#menuScrim"), mBtn = $("#openMenu");
+  function showPanel(id) {
+    $("#mMain").hidden = id !== "mMain"; $("#mProducts").hidden = id !== "mProducts";
+    const f = $("#" + id).querySelector("a,button"); if (f) f.focus();
+  }
+  function openMenu() {
+    menu.classList.add("open"); menu.setAttribute("aria-hidden", "false"); mScrim.hidden = false;
+    mBtn.setAttribute("aria-expanded", "true"); document.body.classList.add("no-scroll"); showPanel("mMain");
+  }
+  function closeMenu() {
+    if (!menu.classList.contains("open")) return;
+    menu.classList.remove("open"); menu.setAttribute("aria-hidden", "true"); mScrim.hidden = true;
+    mBtn.setAttribute("aria-expanded", "false"); document.body.classList.remove("no-scroll"); mBtn.focus();
+  }
+  function renderMenu() {
+    const items3d = live().filter(p => p.sec !== "lum");
+    const cats = [...new Set(items3d.map(p => p.cat))].filter(c => CATS[c]);
+    const lamps = live().some(p => p.sec === "lum");
+    $("#mProdList").innerHTML = `<li><a href="#tienda3d" data-go data-f="todos">Ver todos los productos</a></li>`
+      + (cats.length ? `<li class="grp">Tienda 3D</li>` + cats.map(c => `<li><a href="#tienda3d" data-go data-f="${c}">${esc(CATS[c])}</a></li>`).join("") : "")
+      + (lamps ? `<li class="grp">Luminarias</li><li><a href="#luminarias" data-go>Lámparas</a></li>` : "")
+      + `<li class="grp">A medida</li><li><a href="#servicios" data-go>Impresión 3D a pedido</a></li>`;
+  }
+  mBtn.onclick = openMenu; mScrim.onclick = closeMenu; $("#closeMenu").onclick = closeMenu;
+  $("#toProducts").onclick = () => showPanel("mProducts");
+  $("#backMain").onclick = () => showPanel("mMain");
+  menu.addEventListener("click", e => {
+    if (e.target.closest("[data-close]")) return closeMenu();
+    const a = e.target.closest("[data-go]"); if (!a) return;
+    if (a.dataset.f) { filtro = a.dataset.f; renderCatalog(); }
+    menu.classList.remove("open"); menu.setAttribute("aria-hidden", "true"); mScrim.hidden = true;
+    mBtn.setAttribute("aria-expanded", "false"); document.body.classList.remove("no-scroll");
+  });
   document.querySelectorAll("[data-wa]").forEach(a => a.href = waLink(a.dataset.wa));
 
   /* ---------- Carrito ---------- */
@@ -53,7 +88,7 @@
   function openCart() { $("#drawer").classList.add("open"); $("#drawer").setAttribute("aria-hidden", "false"); $("#scrim").hidden = false; if (step === 4) step = 1; render(); $("#closeCart").focus(); }
   function closeCart() { $("#drawer").classList.remove("open"); $("#drawer").setAttribute("aria-hidden", "true"); $("#scrim").hidden = true; }
   $("#openCart").onclick = openCart; $("#closeCart").onclick = closeCart; $("#scrim").onclick = closeCart;
-  document.addEventListener("keydown", e => { if (e.key === "Escape") closeCart(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") { closeCart(); closeMenu(); } });
 
   const envio = () => datos.entrega === "envio" ? (Number(cfg().envio) || 0) : 0;
   const PAGOS = () => ({
@@ -186,7 +221,7 @@
   /* ---------- Carga ---------- */
   refreshCount();
   fetch("/api/catalogo").then(r => r.ok ? r.json() : Promise.reject())
-    .then(d => { DATA = { config: { ...DATA.config, ...d.config }, productos: d.productos || [] }; cleanCart(); refreshCount(); renderCatalog(); })
+    .then(d => { DATA = { config: { ...DATA.config, ...d.config }, productos: d.productos || [] }; cleanCart(); refreshCount(); renderCatalog(); renderMenu(); })
     .catch(() => {
       $("#grid3d").innerHTML = `<p class="none">No pudimos cargar los productos. Probá recargar la página o escribinos por WhatsApp.</p>`;
       $("#gridLamps").innerHTML = "";
