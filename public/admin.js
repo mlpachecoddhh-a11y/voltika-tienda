@@ -29,7 +29,7 @@
     const r = await api("/api/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ usuario, clave }) });
     $("#lBtn").disabled = false; $("#lBtn").textContent = "Ingresar";
     if (!r.ok) { showLogin(r.body.error || "No se pudo ingresar."); return; }
-    start();
+    start(true);
   });
   $("#aLogout").onclick = async () => {
     if (dirty && !$("#aLogout").dataset.sure) { $("#aLogout").dataset.sure = "1"; toast("Tenés cambios sin publicar. Tocá Salir de nuevo para salir igual."); setTimeout(() => delete $("#aLogout").dataset.sure, 4000); return; }
@@ -37,9 +37,16 @@
   };
   window.addEventListener("beforeunload", e => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
 
-  async function start() {
-    const s = await api("/api/sesion");
-    if (!s.ok) { showLogin(""); return; }
+  async function start(recienIngreso) {
+    const s = await fetch("/api/sesion", { credentials: "same-origin", cache: "no-store", headers: H })
+      .then(async r => ({ ok: r.ok, body: await r.json().catch(() => ({})) }))
+      .catch(() => ({ ok: false, body: {} }));
+    if (!s.ok) {
+      showLogin(recienIngreso
+        ? "El usuario y la contraseña son correctos, pero este navegador no guardó la sesión. Abrí la página directamente en Chrome (no desde WhatsApp o Instagram) y volvé a ingresar."
+        : "");
+      return;
+    }
     almacenamiento = s.body.almacenamiento;
     $("#who").innerHTML = `Ingresaste como <b>${esc(s.body.usuario)}</b>`;
     $("#loginView").hidden = true; $("#adminView").hidden = false;
