@@ -1,6 +1,6 @@
 // Panel de administración: login, edición del catálogo, fotos y publicación.
 (function () {
-  const { esc, visual, fotoOk, CATS, SECS, toast } = window.VK;
+  const { esc, visual, fotoOk, CATS, SECS, CATS_SEC, toast } = window.VK;
   const $ = s => document.querySelector(s);
   const H = { "x-voltika": "admin" };
 
@@ -72,7 +72,7 @@
 
   /* ---------- Render ---------- */
   function catOptions(p) {
-    const keys = p.sec === "lum" ? ["lamparas", "deco", "otros"] : ["antiestres", "soportes", "kits", "deco", "otros"];
+    const keys = CATS_SEC[p.sec] || CATS_SEC["3d"];
     return keys.map(k => `<option value="${k}" ${p.cat === k ? "selected" : ""}>${CATS[k]}</option>`).join("");
   }
   function prodRow(p, i, n) {
@@ -103,7 +103,7 @@
   }
   function renderAdmin() {
     const c = draft.config, n = draft.productos.length;
-    const list = sec => draft.productos.map((p, i) => [p, i]).filter(([p]) => (p.sec === "lum") === (sec === "lum"));
+    const list = sec => draft.productos.map((p, i) => [p, i]).filter(([p]) => p.sec === sec);
     const block = (sec, title, hint) => {
       const rows = list(sec);
       return `<section class="a-sec" style="padding:0">
@@ -125,6 +125,7 @@
       </section>
       ${block("3d", "Tienda 3D", "Antiestrés, sensoriales, soportes y kits. Usá las flechas para cambiar el orden en la tienda.")}
       ${block("lum", "Luminarias", "Lámparas y apliques. Se muestran en la banda oscura.")}
+      ${block("hogar", "Accesorios para el hogar", "Cocina, baño, organización y decoración.")}
       <div class="a-note">Los cambios se ven en la tienda cuando tocás <strong>Guardar y publicar</strong> (pueden tardar hasta un minuto). Ocultar un producto lo saca de la tienda sin borrarlo.</div>`;
   }
 
@@ -146,13 +147,13 @@
     if (t.dataset.new) {
       const sec = t.dataset.new;
       const p = { id: "p" + Date.now().toString(36), sec, cat: sec === "lum" ? "lamparas" : "otros", nombre: "Producto nuevo", sub: "", precio: 0, art: "", badge: "Nuevo", img: "", visible: true };
-      const last = P.reduce((a, q, i) => ((q.sec === "lum") === (sec === "lum") ? i : a), P.length - 1);
+      const last = P.reduce((a, q, i) => (q.sec === sec ? i : a), P.length - 1);
       P.splice(last + 1, 0, p); setDirty(true); renderAdmin();
       const inp = document.getElementById("n-" + p.id); if (inp) { inp.scrollIntoView({ block: "center" }); inp.select(); }
     }
     if (t.dataset.move) {
-      const i = +t.dataset.i, d = +t.dataset.move, sec = P[i].sec === "lum";
-      let j = i + d; while (j >= 0 && j < P.length && (P[j].sec === "lum") !== sec) j += d;
+      const i = +t.dataset.i, d = +t.dataset.move, sec = P[i].sec;
+      let j = i + d; while (j >= 0 && j < P.length && P[j].sec !== sec) j += d;
       if (j < 0 || j >= P.length) return;
       [P[i], P[j]] = [P[j], P[i]]; setDirty(true); renderAdmin();
     }

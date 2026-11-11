@@ -18,8 +18,9 @@
   const fotoOk = u => typeof u === "string" && /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//.test(u);
   window.VK = {
     ART, esc, fotoOk,
-    CATS: { antiestres: "Antiestrés y sensoriales", soportes: "Soportes", kits: "Kits", deco: "Decoración", otros: "Otros", lamparas: "Lámparas" },
-    SECS: { "3d": "Tienda 3D", lum: "Luminarias" },
+    CATS: { antiestres: "Antiestrés y sensoriales", soportes: "Soportes", kits: "Kits", deco: "Decoración", otros: "Otros", lamparas: "Lámparas", cocina: "Cocina", bano: "Baño", organizacion: "Organización" },
+    SECS: { "3d": "Tienda 3D", lum: "Luminarias", hogar: "Accesorios para el hogar" },
+    CATS_SEC: { "3d": ["antiestres", "soportes", "kits", "deco", "otros"], lum: ["lamparas", "deco", "otros"], hogar: ["cocina", "bano", "organizacion", "deco", "otros"] },
     money: n => "$ " + (Number(n) || 0).toLocaleString("es-AR"),
     visual: p => fotoOk(p.img) ? `<img src="${esc(p.img)}" alt="${esc(p.nombre)}" loading="lazy">` : (ART[p.art] || (p.sec === "lum" ? ART.l1 : ART.box)),
     toast(t) {

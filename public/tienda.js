@@ -10,9 +10,9 @@
   const byId = () => Object.fromEntries(live().map(p => [p.id, p]));
 
   /* ---------- Catálogo ---------- */
-  let filtro = "todos";
+  let filtro = "todos", filtroH = "todos";
   function renderCatalog() {
-    const items3d = live().filter(p => p.sec !== "lum");
+    const items3d = live().filter(p => p.sec === "3d");
     const cats = [...new Set(items3d.map(p => p.cat))].filter(c => CATS[c]);
     if (filtro !== "todos" && !cats.includes(filtro)) filtro = "todos";
     $("#filters").innerHTML = [["todos", "Todos"], ...cats.map(c => [c, CATS[c]])]
@@ -25,9 +25,18 @@
     $("#grid3d").innerHTML = shown.length ? shown.map(card).join("") : `<p class="none">Pronto vas a encontrar productos nuevos acá.</p>`;
     const lamps = live().filter(p => p.sec === "lum");
     $("#gridLamps").innerHTML = lamps.length ? lamps.map(card).join("") : `<p class="none" style="color:#aab4b8">Nuevos modelos en camino.</p>`;
+    const hogar = live().filter(p => p.sec === "hogar");
+    const catsH = [...new Set(hogar.map(p => p.cat))].filter(c => CATS[c]);
+    if (filtroH !== "todos" && !catsH.includes(filtroH)) filtroH = "todos";
+    $("#filtersHogar").innerHTML = [["todos", "Todos"], ...catsH.map(c => [c, CATS[c]])]
+      .map(([k, t]) => `<button class="chip" type="button" data-fh="${k}" aria-pressed="${k === filtroH}">${esc(t)}</button>`).join("");
+    $("#filtersHogar").hidden = catsH.length < 2;
+    const shownH = hogar.filter(p => filtroH === "todos" || p.cat === filtroH);
+    $("#gridHogar").innerHTML = shownH.length ? shownH.map(card).join("") : `<p class="none">Muy pronto: accesorios para cocina, baño y organización.</p>`;
     document.querySelectorAll("[data-wa]").forEach(a => a.href = waLink(a.dataset.wa));
     document.querySelectorAll("[data-phone]").forEach(el => el.textContent = cfg().telefono);
   }
+  $("#filtersHogar").addEventListener("click", e => { const c = e.target.closest("[data-fh]"); if (!c) return; filtroH = c.dataset.fh; renderCatalog(); });
   $("#filters").addEventListener("click", e => { const c = e.target.closest("[data-f]"); if (!c) return; filtro = c.dataset.f; renderCatalog(); });
 
   /* ---------- Menú lateral ---------- */
@@ -46,12 +55,16 @@
     mBtn.setAttribute("aria-expanded", "false"); document.body.classList.remove("no-scroll"); mBtn.focus();
   }
   function renderMenu() {
-    const items3d = live().filter(p => p.sec !== "lum");
+    const items3d = live().filter(p => p.sec === "3d");
     const cats = [...new Set(items3d.map(p => p.cat))].filter(c => CATS[c]);
     const lamps = live().some(p => p.sec === "lum");
+    const catsH = [...new Set(live().filter(p => p.sec === "hogar").map(p => p.cat))].filter(c => CATS[c]);
     $("#mProdList").innerHTML = `<li><a href="#tienda3d" data-go data-f="todos">Ver todos los productos</a></li>`
       + (cats.length ? `<li class="grp">Tienda 3D</li>` + cats.map(c => `<li><a href="#tienda3d" data-go data-f="${c}">${esc(CATS[c])}</a></li>`).join("") : "")
       + (lamps ? `<li class="grp">Luminarias</li><li><a href="#luminarias" data-go>Lámparas</a></li>` : "")
+      + `<li class="grp">Accesorios para el hogar</li>` + (catsH.length > 1
+          ? `<li><a href="#hogar" data-go data-fh="todos">Ver todos</a></li>` + catsH.map(c => `<li><a href="#hogar" data-go data-fh="${c}">${esc(CATS[c])}</a></li>`).join("")
+          : `<li><a href="#hogar" data-go>Ver accesorios</a></li>`)
       + `<li class="grp">A medida</li><li><a href="#servicios" data-go>Impresión 3D a pedido</a></li>`;
   }
   mBtn.onclick = openMenu; mScrim.onclick = closeMenu; $("#closeMenu").onclick = closeMenu;
@@ -61,6 +74,7 @@
     if (e.target.closest("[data-close]")) return closeMenu();
     const a = e.target.closest("[data-go]"); if (!a) return;
     if (a.dataset.f) { filtro = a.dataset.f; renderCatalog(); }
+    if (a.dataset.fh) { filtroH = a.dataset.fh; renderCatalog(); }
     menu.classList.remove("open"); menu.setAttribute("aria-hidden", "true"); mScrim.hidden = true;
     mBtn.setAttribute("aria-expanded", "false"); document.body.classList.remove("no-scroll");
   });
