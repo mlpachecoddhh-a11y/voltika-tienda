@@ -64,8 +64,7 @@
       + (lamps ? `<li class="grp">Luminarias</li><li><a href="#luminarias" data-go>Lámparas</a></li>` : "")
       + `<li class="grp">Accesorios para el hogar</li>` + (catsH.length > 1
           ? `<li><a href="#hogar" data-go data-fh="todos">Ver todos</a></li>` + catsH.map(c => `<li><a href="#hogar" data-go data-fh="${c}">${esc(CATS[c])}</a></li>`).join("")
-          : `<li><a href="#hogar" data-go>Ver accesorios</a></li>`)
-      + `<li class="grp">A medida</li><li><a href="#servicios" data-go>Impresión 3D a pedido</a></li>`;
+          : `<li><a href="#hogar" data-go>Ver accesorios</a></li>`);
   }
   mBtn.onclick = openMenu; mScrim.onclick = closeMenu; $("#closeMenu").onclick = closeMenu;
   $("#toProducts").onclick = () => showPanel("mProducts");

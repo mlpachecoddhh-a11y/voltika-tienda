@@ -118,7 +118,9 @@ section{padding-block:56px}
 .add.done{background:var(--green);color:#fff}
 .none{grid-column:1/-1;color:var(--muted);padding:20px 0}
 
-.services{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.services{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media (max-width:900px){.services{grid-template-columns:1fr}}
+section[id],main[id]{scroll-margin-top:110px}
 .svc{background:var(--paper);border-radius:6px;padding:22px;display:flex;flex-direction:column;gap:10px}
 .svc h3{font-family:var(--f-head);font-weight:400;text-transform:uppercase;font-size:1.6rem;line-height:1.05}
 .svc p{margin:0;color:var(--ink-2)}
