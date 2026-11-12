@@ -54,18 +54,6 @@
     menu.classList.remove("open"); menu.setAttribute("aria-hidden", "true"); mScrim.hidden = true;
     mBtn.setAttribute("aria-expanded", "false"); document.body.classList.remove("no-scroll"); mBtn.focus();
   }
-  function renderMenu() {
-    const items3d = live().filter(p => p.sec === "3d");
-    const cats = [...new Set(items3d.map(p => p.cat))].filter(c => CATS[c]);
-    const lamps = live().some(p => p.sec === "lum");
-    const catsH = [...new Set(live().filter(p => p.sec === "hogar").map(p => p.cat))].filter(c => CATS[c]);
-    $("#mProdList").innerHTML = `<li><a href="#tienda3d" data-go data-f="todos">Ver todos los productos</a></li>`
-      + (cats.length ? `<li class="grp">Tienda 3D</li>` + cats.map(c => `<li><a href="#tienda3d" data-go data-f="${c}">${esc(CATS[c])}</a></li>`).join("") : "")
-      + (lamps ? `<li class="grp">Luminarias</li><li><a href="#luminarias" data-go>Lámparas</a></li>` : "")
-      + `<li class="grp">Accesorios para el hogar</li>` + (catsH.length > 1
-          ? `<li><a href="#hogar" data-go data-fh="todos">Ver todos</a></li>` + catsH.map(c => `<li><a href="#hogar" data-go data-fh="${c}">${esc(CATS[c])}</a></li>`).join("")
-          : `<li><a href="#hogar" data-go>Ver accesorios</a></li>`);
-  }
   mBtn.onclick = openMenu; mScrim.onclick = closeMenu; $("#closeMenu").onclick = closeMenu;
   $("#toProducts").onclick = () => showPanel("mProducts");
   $("#backMain").onclick = () => showPanel("mMain");
@@ -234,7 +222,7 @@
   /* ---------- Carga ---------- */
   refreshCount();
   fetch("/api/catalogo").then(r => r.ok ? r.json() : Promise.reject())
-    .then(d => { DATA = { config: { ...DATA.config, ...d.config }, productos: d.productos || [] }; cleanCart(); refreshCount(); renderCatalog(); renderMenu(); })
+    .then(d => { DATA = { config: { ...DATA.config, ...d.config }, productos: d.productos || [] }; cleanCart(); refreshCount(); renderCatalog(); })
     .catch(() => {
       $("#grid3d").innerHTML = `<p class="none">No pudimos cargar los productos. Probá recargar la página o escribinos por WhatsApp.</p>`;
       $("#gridLamps").innerHTML = "";
