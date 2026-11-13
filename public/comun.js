@@ -20,6 +20,7 @@
     ART, esc, fotoOk,
     CATS: { antiestres: "Antiestrés y sensoriales", soportes: "Soportes", kits: "Kits", deco: "Decoración", otros: "Otros", lamparas: "Lámparas", cocina: "Cocina", bano: "Baño", organizacion: "Organización" },
     SECS: { "3d": "Tienda 3D", lum: "Luminarias", hogar: "Accesorios para el hogar" },
+    PROMO_INICIAL: { activa: true, etiqueta: "", titulo: "Promo BBVA", texto: "", boton: "", mensaje: "", video: "", imagen: "" },
     CATS_SEC: { "3d": ["antiestres", "soportes", "kits", "deco", "otros"], lum: ["lamparas", "deco", "otros"], hogar: ["cocina", "bano", "organizacion", "deco", "otros"] },
     money: n => "$ " + (Number(n) || 0).toLocaleString("es-AR"),
     visual: p => fotoOk(p.img) ? `<img src="${esc(p.img)}" alt="${esc(p.nombre)}" loading="lazy">` : (ART[p.art] || (p.sec === "lum" ? ART.l1 : ART.box)),

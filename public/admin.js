@@ -102,7 +102,7 @@
     </article>`;
   }
   function promoBlock() {
-    const p = draft.config.promo || (draft.config.promo = {});
+    const p = draft.config.promo || (draft.config.promo = { ...window.VK.PROMO_INICIAL });
     const f = (k, label, max, ph = "", full = false) => `<label${full ? ' class="full"' : ""} for="pr-${k}">${label}<input id="pr-${k}" data-pc="${k}" value="${esc(p[k] || "")}" maxlength="${max}" placeholder="${esc(ph)}"></label>`;
     const media = p.video ? `<video src="${esc(p.video)}" muted playsinline controls preload="metadata" style="width:100%;max-height:200px;background:#000;border-radius:4px"></video>`
       : p.imagen ? `<img src="${esc(p.imagen)}" alt="" style="width:100%;max-height:200px;object-fit:cover;border-radius:4px">`

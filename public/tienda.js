@@ -12,7 +12,7 @@
   /* ---------- Catálogo ---------- */
   let filtro = "todos", filtroH = "todos";
   function renderPromo() {
-    const p = (DATA.config || {}).promo || {}, el = $("#promo");
+    const p = (DATA.config || {}).promo || window.VK.PROMO_INICIAL, el = $("#promo");
     if (!p.activa || !(p.titulo || p.video || p.imagen)) { el.hidden = true; el.innerHTML = ""; return; }
     const media = p.video
       ? `<div class="p-media"><video src="${esc(p.video)}" ${p.imagen ? `poster="${esc(p.imagen)}"` : ""} autoplay muted loop playsinline controls preload="metadata"></video></div>`
