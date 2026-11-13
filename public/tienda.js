@@ -11,6 +11,14 @@
 
   /* ---------- Catálogo ---------- */
   let filtro = "todos", filtroH = "todos";
+  function renderTextos() {
+    const t = (DATA.config || {}).textos || {};
+    document.querySelectorAll("[data-t]").forEach(el => {
+      const [sec, campo] = el.dataset.t.split("."), base = window.VK.TEXTOS_INICIALES[sec] || {};
+      const v = ((t[sec] || {})[campo] || "").trim() || base[campo] || "";
+      if (v) el.textContent = campo === "titulo" ? v + " " : v;
+    });
+  }
   function renderPromo() {
     const p = (DATA.config || {}).promo || window.VK.PROMO_INICIAL, el = $("#promo");
     if (!p.activa || !(p.titulo || p.video || p.imagen)) { el.hidden = true; el.innerHTML = ""; return; }
@@ -51,8 +59,8 @@
     document.querySelectorAll("[data-wa]").forEach(a => a.href = waLink(a.dataset.wa));
     document.querySelectorAll("[data-phone]").forEach(el => el.textContent = cfg().telefono);
   }
-  $("#filtersHogar").addEventListener("click", e => { const c = e.target.closest("[data-fh]"); if (!c) return; filtroH = c.dataset.fh; renderCatalog(); renderPromo(); });
-  $("#filters").addEventListener("click", e => { const c = e.target.closest("[data-f]"); if (!c) return; filtro = c.dataset.f; renderCatalog(); renderPromo(); });
+  $("#filtersHogar").addEventListener("click", e => { const c = e.target.closest("[data-fh]"); if (!c) return; filtroH = c.dataset.fh; renderCatalog(); renderPromo(); renderTextos(); });
+  $("#filters").addEventListener("click", e => { const c = e.target.closest("[data-f]"); if (!c) return; filtro = c.dataset.f; renderCatalog(); renderPromo(); renderTextos(); });
 
   /* ---------- Menú lateral ---------- */
   const menu = $("#menu"), mScrim = $("#menuScrim"), mBtn = $("#openMenu");
@@ -237,7 +245,7 @@
   /* ---------- Carga ---------- */
   refreshCount();
   fetch("/api/catalogo").then(r => r.ok ? r.json() : Promise.reject())
-    .then(d => { DATA = { config: { ...DATA.config, ...d.config }, productos: d.productos || [] }; cleanCart(); refreshCount(); renderCatalog(); renderPromo(); })
+    .then(d => { DATA = { config: { ...DATA.config, ...d.config }, productos: d.productos || [] }; cleanCart(); refreshCount(); renderCatalog(); renderPromo(); renderTextos(); })
     .catch(() => {
       $("#grid3d").innerHTML = `<p class="none">No pudimos cargar los productos. Probá recargar la página o escribinos por WhatsApp.</p>`;
       $("#gridLamps").innerHTML = "";

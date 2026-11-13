@@ -101,6 +101,19 @@
       </div>
     </article>`;
   }
+  function textosBlock() {
+    const T = window.VK.TEXTOS_INICIALES, t = draft.config.textos || (draft.config.textos = {});
+    const fila = (sec, k, label, max, full) => `<label${full ? ' class="full"' : ""} for="tx-${sec}-${k}">${label}<input id="tx-${sec}-${k}" data-tx="${sec}.${k}" value="${esc((t[sec] || {})[k] || "")}" maxlength="${max}" placeholder="${esc(T[sec][k])}"></label>`;
+    return `<section class="a-sec" style="padding:0">
+      <header><div><h3>Textos de la página</h3><p class="hint">Títulos y descripciones de cada sección. Si dejás un campo vacío se usa el texto actual (el que se ve en gris).</p></div></header>
+      ${Object.keys(T).map(sec => `<details class="tx"><summary>${esc(T[sec].nombre)}</summary><div class="cfg">
+        ${fila(sec, "etiqueta", "Etiqueta (arriba, chiquita)", 40)}
+        ${fila(sec, "titulo", "Título", 60)}
+        ${fila(sec, "destacado", "Parte del título en verde", 60)}
+        ${fila(sec, "texto", "Descripción", 240, true)}
+      </div></details>`).join("")}
+    </section>`;
+  }
   function promoBlock() {
     const p = draft.config.promo || (draft.config.promo = { ...window.VK.PROMO_INICIAL });
     const f = (k, label, max, ph = "", full = false) => `<label${full ? ' class="full"' : ""} for="pr-${k}">${label}<input id="pr-${k}" data-pc="${k}" value="${esc(p[k] || "")}" maxlength="${max}" placeholder="${esc(ph)}"></label>`;
@@ -178,6 +191,7 @@
         </div>
       </section>
       ${promoBlock()}
+      ${textosBlock()}
       ${block("3d", "Tienda 3D", "Antiestrés, sensoriales, soportes y kits. Usá las flechas para cambiar el orden en la tienda.")}
       ${block("lum", "Luminarias", "Lámparas y apliques. Se muestran en la banda oscura.")}
       ${block("hogar", "Accesorios para el hogar", "Cocina, baño, organización y decoración.")}
@@ -188,6 +202,7 @@
   $("#aMain").addEventListener("input", e => {
     const t = e.target;
     if (t.dataset.k) { const p = draft.productos[+t.dataset.i]; p[t.dataset.k] = t.dataset.k === "precio" ? Math.max(0, Math.round(Number(t.value) || 0)) : t.value; setDirty(true); }
+    else if (t.dataset.tx) { const [s, k] = t.dataset.tx.split("."); const T = draft.config.textos || (draft.config.textos = {}); (T[s] || (T[s] = {}))[k] = t.value; setDirty(true); }
     else if (t.dataset.pc) { draft.config.promo[t.dataset.pc] = t.value; setDirty(true); }
     else if (t.dataset.c) { draft.config[t.dataset.c] = t.dataset.c === "envio" ? Math.max(0, Math.round(Number(t.value) || 0)) : t.value; setDirty(true); }
   });
