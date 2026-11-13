@@ -11,6 +11,21 @@
 
   /* ---------- Catálogo ---------- */
   let filtro = "todos", filtroH = "todos";
+  function renderPromo() {
+    const p = (DATA.config || {}).promo || {}, el = $("#promo");
+    if (!p.activa || !(p.titulo || p.video || p.imagen)) { el.hidden = true; el.innerHTML = ""; return; }
+    const media = p.video
+      ? `<div class="p-media"><video src="${esc(p.video)}" ${p.imagen ? `poster="${esc(p.imagen)}"` : ""} autoplay muted loop playsinline controls preload="metadata"></video></div>`
+      : p.imagen ? `<div class="p-media"><img src="${esc(p.imagen)}" alt="${esc(p.titulo || "Promoción")}" loading="lazy"></div>` : "";
+    el.className = "promo" + (media ? "" : " solo");
+    el.innerHTML = media + `<div class="p-txt">
+      ${p.etiqueta ? `<span class="p-tag">${esc(p.etiqueta)}</span>` : ""}
+      ${p.titulo ? `<h3>${esc(p.titulo)}</h3>` : ""}
+      ${p.texto ? `<p>${esc(p.texto)}</p>` : ""}
+      ${p.boton ? `<a class="btn lime" target="_blank" rel="noopener" href="${waLink(p.mensaje || ("Hola Voltika, quiero consultar por la promo: " + (p.titulo || "")))}">${esc(p.boton)}</a>` : ""}
+    </div>`;
+    el.hidden = false;
+  }
   function renderCatalog() {
     const items3d = live().filter(p => p.sec === "3d");
     const cats = [...new Set(items3d.map(p => p.cat))].filter(c => CATS[c]);
@@ -36,8 +51,8 @@
     document.querySelectorAll("[data-wa]").forEach(a => a.href = waLink(a.dataset.wa));
     document.querySelectorAll("[data-phone]").forEach(el => el.textContent = cfg().telefono);
   }
-  $("#filtersHogar").addEventListener("click", e => { const c = e.target.closest("[data-fh]"); if (!c) return; filtroH = c.dataset.fh; renderCatalog(); });
-  $("#filters").addEventListener("click", e => { const c = e.target.closest("[data-f]"); if (!c) return; filtro = c.dataset.f; renderCatalog(); });
+  $("#filtersHogar").addEventListener("click", e => { const c = e.target.closest("[data-fh]"); if (!c) return; filtroH = c.dataset.fh; renderCatalog(); renderPromo(); });
+  $("#filters").addEventListener("click", e => { const c = e.target.closest("[data-f]"); if (!c) return; filtro = c.dataset.f; renderCatalog(); renderPromo(); });
 
   /* ---------- Menú lateral ---------- */
   const menu = $("#menu"), mScrim = $("#menuScrim"), mBtn = $("#openMenu");
@@ -222,7 +237,7 @@
   /* ---------- Carga ---------- */
   refreshCount();
   fetch("/api/catalogo").then(r => r.ok ? r.json() : Promise.reject())
-    .then(d => { DATA = { config: { ...DATA.config, ...d.config }, productos: d.productos || [] }; cleanCart(); refreshCount(); renderCatalog(); })
+    .then(d => { DATA = { config: { ...DATA.config, ...d.config }, productos: d.productos || [] }; cleanCart(); refreshCount(); renderCatalog(); renderPromo(); })
     .catch(() => {
       $("#grid3d").innerHTML = `<p class="none">No pudimos cargar los productos. Probá recargar la página o escribinos por WhatsApp.</p>`;
       $("#gridLamps").innerHTML = "";

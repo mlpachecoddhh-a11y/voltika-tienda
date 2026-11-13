@@ -101,6 +101,60 @@
       </div>
     </article>`;
   }
+  function promoBlock() {
+    const p = draft.config.promo || (draft.config.promo = {});
+    const f = (k, label, max, ph = "", full = false) => `<label${full ? ' class="full"' : ""} for="pr-${k}">${label}<input id="pr-${k}" data-pc="${k}" value="${esc(p[k] || "")}" maxlength="${max}" placeholder="${esc(ph)}"></label>`;
+    const media = p.video ? `<video src="${esc(p.video)}" muted playsinline controls preload="metadata" style="width:100%;max-height:200px;background:#000;border-radius:4px"></video>`
+      : p.imagen ? `<img src="${esc(p.imagen)}" alt="" style="width:100%;max-height:200px;object-fit:cover;border-radius:4px">`
+      : `<div class="a-note" style="margin:0">Sin video ni imagen.</div>`;
+    return `<section class="a-sec" style="padding:0">
+      <header><div><h3>Banner de promoción</h3><p class="hint">Aparece en Servicios eléctricos. Ideal para promos bancarias, cuotas o lanzamientos.</p></div>
+      <label class="toggle" for="pr-activa"><input type="checkbox" id="pr-activa" data-pa ${p.activa ? "checked" : ""}> Mostrar en la tienda</label></header>
+      <div class="cfg">
+        ${f("etiqueta", "Etiqueta", 40, "Ej.: Promo BBVA")}
+        ${f("titulo", "Título", 70, "Ej.: 6 cuotas sin interés")}
+        ${f("texto", "Texto", 220, "Condiciones, vigencia, medios de pago…", true)}
+        ${f("boton", "Texto del botón", 30, "Ej.: Quiero la promo")}
+        ${f("mensaje", "Mensaje de WhatsApp del botón", 160, "Hola Voltika, quiero la promo BBVA")}
+        <div class="full" style="display:grid;gap:10px">
+          ${media}
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <label class="btn ghost small filebtn">${p.video ? "Cambiar video" : "Subir video"}<input type="file" accept="video/mp4,video/webm,video/quicktime" id="prVideo" ${almacenamiento ? "" : "disabled"}></label>
+            <label class="btn ghost small filebtn">${p.imagen ? "Cambiar imagen" : "Subir imagen"}<input type="file" accept="image/png,image/jpeg,image/webp" id="prImg" ${almacenamiento ? "" : "disabled"}></label>
+            ${p.video ? `<button class="linkbtn" type="button" data-prq="video">Quitar video</button>` : ""}
+            ${p.imagen ? `<button class="linkbtn" type="button" data-prq="imagen">Quitar imagen</button>` : ""}
+            <span class="hint" id="prProg"></span>
+          </div>
+          <p class="hint" style="margin:0">Video MP4 de hasta 60 MB (se reproduce sin sonido y en bucle). La imagen se usa si no hay video, o como portada mientras carga.</p>
+        </div>
+      </div>
+    </section>`;
+  }
+  async function subirVideo(file) {
+    if (!file) return;
+    if (file.size > 60 * 1024 * 1024) { toast("El video pesa más de 60 MB. Probá con uno más corto o comprimido."); return; }
+    const prog = $("#prProg");
+    try {
+      const { upload } = await import("/vendor/blob-client.js");
+      const ext = (file.name.split(".").pop() || "mp4").toLowerCase().replace(/[^a-z0-9]/g, "") || "mp4";
+      const r = await upload(`videos/promo.${ext}`, file, {
+        access: "public", handleUploadUrl: "/api/video", headers: H, contentType: file.type || "video/mp4",
+        multipart: file.size > 8 * 1024 * 1024,
+        onUploadProgress: e => { if (prog) prog.textContent = `Subiendo… ${Math.round(e.percentage)}%`; }
+      });
+      draft.config.promo.video = r.url; setDirty(true); renderAdmin(); toast("Video cargado. Publicá para que se vea en la tienda.");
+    } catch (e) { console.error(e); if (prog) prog.textContent = ""; toast("No se pudo subir el video. Revisá la conexión o probá con un MP4."); }
+  }
+  async function subirImagenPromo(file) {
+    if (!file) return;
+    const prog = $("#prProg"); if (prog) prog.textContent = "Subiendo imagen…";
+    try {
+      const blob = await achicar(file);
+      const r = await api("/api/foto", { method: "POST", headers: { "content-type": blob.type || "image/jpeg" }, body: blob });
+      if (!r.ok) { toast(r.body.error || "No se pudo subir la imagen."); if (prog) prog.textContent = ""; return; }
+      draft.config.promo.imagen = r.body.url; setDirty(true); renderAdmin(); toast("Imagen cargada. Publicá para que se vea en la tienda.");
+    } catch { toast("No se pudo subir la imagen."); if (prog) prog.textContent = ""; }
+  }
   function renderAdmin() {
     const c = draft.config, n = draft.productos.length;
     const list = sec => draft.productos.map((p, i) => [p, i]).filter(([p]) => p.sec === sec);
@@ -123,6 +177,7 @@
           <label for="cfgEnvio">Costo de envío en Ushuaia ($)<input id="cfgEnvio" data-c="envio" type="number" min="0" step="100" value="${Number(c.envio) || 0}"></label>
         </div>
       </section>
+      ${promoBlock()}
       ${block("3d", "Tienda 3D", "Antiestrés, sensoriales, soportes y kits. Usá las flechas para cambiar el orden en la tienda.")}
       ${block("lum", "Luminarias", "Lámparas y apliques. Se muestran en la banda oscura.")}
       ${block("hogar", "Accesorios para el hogar", "Cocina, baño, organización y decoración.")}
@@ -133,6 +188,7 @@
   $("#aMain").addEventListener("input", e => {
     const t = e.target;
     if (t.dataset.k) { const p = draft.productos[+t.dataset.i]; p[t.dataset.k] = t.dataset.k === "precio" ? Math.max(0, Math.round(Number(t.value) || 0)) : t.value; setDirty(true); }
+    else if (t.dataset.pc) { draft.config.promo[t.dataset.pc] = t.value; setDirty(true); }
     else if (t.dataset.c) { draft.config[t.dataset.c] = t.dataset.c === "envio" ? Math.max(0, Math.round(Number(t.value) || 0)) : t.value; setDirty(true); }
   });
   $("#aMain").addEventListener("change", e => {
@@ -140,6 +196,9 @@
     if (t.dataset.k === "sec") { const p = draft.productos[+t.dataset.i]; p.cat = p.sec === "lum" ? "lamparas" : "otros"; if (!p.img) p.art = ""; renderAdmin(); }
     if (t.dataset.vis) { draft.productos[+t.dataset.vis].visible = t.checked; setDirty(true); renderAdmin(); }
     if (t.dataset.photo) subirFoto(+t.dataset.photo, t.files && t.files[0]);
+    if (t.id === "prVideo") subirVideo(t.files && t.files[0]);
+    if (t.id === "prImg") subirImagenPromo(t.files && t.files[0]);
+    if (t.hasAttribute("data-pa")) { draft.config.promo.activa = t.checked; setDirty(true); }
   });
   $("#aMain").addEventListener("click", e => {
     const t = e.target.closest("button"); if (!t) return;
@@ -162,6 +221,7 @@
       if (sureDel === P[i].id) { const name = P[i].nombre; P.splice(i, 1); sureDel = null; setDirty(true); renderAdmin(); toast(`${name} eliminado (se aplica al publicar)`); }
       else { sureDel = P[i].id; renderAdmin(); }
     }
+    if (t.dataset.prq) { draft.config.promo[t.dataset.prq] = ""; setDirty(true); renderAdmin(); }
     if (t.dataset.nophoto) { draft.productos[+t.dataset.nophoto].img = ""; setDirty(true); renderAdmin(); }
   });
 
