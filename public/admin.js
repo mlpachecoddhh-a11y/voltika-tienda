@@ -91,6 +91,13 @@
         <label class="full" for="s-${id}">Descripción corta<input id="s-${id}" data-k="sub" data-i="${i}" value="${esc(p.sub)}" maxlength="120"></label>
         <label for="sec-${id}">Sección<select id="sec-${id}" data-k="sec" data-i="${i}">${Object.entries(SECS).map(([k, t]) => `<option value="${k}" ${p.sec === k ? "selected" : ""}>${t}</option>`).join("")}</select></label>
         <label for="c-${id}">Categoría<select id="c-${id}" data-k="cat" data-i="${i}">${catOptions(p)}</select></label>
+        <div class="full"><span style="font-weight:600;font-size:.85rem">Paleta de colores disponibles <span class="hint">(opcional: si no cargás colores, no se muestra)</span></span>
+          <div class="colrow" style="margin-top:6px">
+            ${(p.colores || []).map((c, j) => `<span class="colchip"><i style="--c:${c.c}"></i>${esc(c.n || c.c)}<button type="button" data-colrm="${i}:${j}" aria-label="Quitar ${esc(c.n || c.c)}">×</button></span>`).join("")}
+            <span class="coladd"><input type="color" id="cc-${id}" value="#2f9c34" aria-label="Elegir color"><input type="text" id="cn-${id}" maxlength="24" placeholder="Nombre (ej.: Verde)" aria-label="Nombre del color"><button class="btn ghost small" type="button" data-coladd="${i}">+ Agregar color</button></span>
+            ${(p.colores || []).length ? `<button class="linkbtn" type="button" data-colclr="${i}">Sacar paleta</button>` : ""}
+          </div>
+        </div>
         <label class="full" for="b-${id}">Etiqueta destacada (opcional)<input id="b-${id}" data-k="badge" data-i="${i}" value="${esc(p.badge)}" maxlength="22" placeholder="Ej.: Nuevo, Más vendido, Oferta"></label>
       </div>
       <div class="prod-actions">
@@ -236,6 +243,16 @@
       if (sureDel === P[i].id) { const name = P[i].nombre; P.splice(i, 1); sureDel = null; setDirty(true); renderAdmin(); toast(`${name} eliminado (se aplica al publicar)`); }
       else { sureDel = P[i].id; renderAdmin(); }
     }
+    if (t.dataset.coladd) {
+      const p = P[+t.dataset.coladd], id = p.id;
+      const c = document.getElementById("cc-" + id).value.toLowerCase(), n = document.getElementById("cn-" + id).value.trim();
+      p.colores = p.colores || [];
+      if (p.colores.some(x => x.c === c)) { toast("Ese color ya está en la paleta"); return; }
+      if (p.colores.length >= 20) { toast("Máximo 20 colores por producto"); return; }
+      p.colores.push({ c, n }); setDirty(true); renderAdmin();
+    }
+    if (t.dataset.colrm) { const [i, j] = t.dataset.colrm.split(":").map(Number); P[i].colores.splice(j, 1); setDirty(true); renderAdmin(); }
+    if (t.dataset.colclr) { P[+t.dataset.colclr].colores = []; setDirty(true); renderAdmin(); }
     if (t.dataset.prq) { draft.config.promo[t.dataset.prq] = ""; setDirty(true); renderAdmin(); }
     if (t.dataset.nophoto) { draft.productos[+t.dataset.nophoto].img = ""; setDirty(true); renderAdmin(); }
   });

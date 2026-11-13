@@ -34,6 +34,15 @@
     </div>`;
     el.hidden = false;
   }
+  const elegido = {};
+  const sws = p => {
+    const cs = p.colores || []; if (!cs.length) return "";
+    if (cs.length === 1) elegido[p.id] = cs[0].c;
+    return `<div class="sws" role="radiogroup" aria-label="Colores disponibles de ${esc(p.nombre)}">${cs.map(c =>
+      `<button type="button" class="sw" role="radio" style="--c:${c.c}" data-sw="${esc(p.id)}" data-c="${c.c}" aria-checked="${elegido[p.id] === c.c}" aria-label="${esc(c.n || c.c)}" title="${esc(c.n || c.c)}"></button>`).join("")}</div>
+      <small class="sw-name" data-swn="${esc(p.id)}">${elegido[p.id] ? esc(nombreColor(p, elegido[p.id])) : "Elegí un color"}</small>`;
+  };
+  const nombreColor = (p, hex) => { const c = (p.colores || []).find(x => x.c === hex); return c ? (c.n || c.c) : ""; };
   function renderCatalog() {
     const items3d = live().filter(p => p.sec === "3d");
     const cats = [...new Set(items3d.map(p => p.cat))].filter(c => CATS[c]);
@@ -43,6 +52,7 @@
     $("#filters").hidden = cats.length < 2;
     const card = p => `<article class="card"><div class="pic">${p.badge ? `<span class="badge">${esc(p.badge)}</span>` : ""}${visual(p)}</div>
       <div class="body"><h3>${esc(p.nombre)}</h3>${p.sub ? `<p class="sub">${esc(p.sub)}</p>` : ""}
+      ${sws(p)}
       <div class="row"><span class="price">${money(p.precio)}</span><button class="add" type="button" data-add="${esc(p.id)}">Agregar</button></div></div></article>`;
     const shown = items3d.filter(p => filtro === "todos" || p.cat === filtro);
     $("#grid3d").innerHTML = shown.length ? shown.map(card).join("") : `<p class="none">Pronto vas a encontrar productos nuevos acá.</p>`;
@@ -94,17 +104,32 @@
   let cart = {};
   try { cart = JSON.parse(localStorage.getItem("voltika-cart") || "{}") || {}; } catch { cart = {}; }
   const save = () => { try { localStorage.setItem("voltika-cart", JSON.stringify(cart)); } catch {} };
-  const cleanCart = () => { const ids = byId(); for (const k in cart) if (!ids[k]) delete cart[k]; save(); };
+  const parte = k => { const [id, c] = k.split("|"); return { id, c: c || "" }; };
+  const prod = k => byId()[parte(k).id];
+  const nombreLinea = k => { const { c } = parte(k), p = prod(k); return p.nombre + (c ? ` (${nombreColor(p, c) || c})` : ""); };
+  const cleanCart = () => { for (const k in cart) { const p = prod(k), { c } = parte(k); if (!p || (c && !(p.colores || []).some(x => x.c === c))) delete cart[k]; } save(); };
   const count = () => Object.values(cart).reduce((a, b) => a + b, 0);
-  const subtotal = () => { const ids = byId(); return Object.entries(cart).reduce((a, [id, q]) => a + (Number(ids[id].precio) || 0) * q, 0); };
+  const subtotal = () => Object.entries(cart).reduce((a, [k, q]) => a + (Number(prod(k).precio) || 0) * q, 0);
   const refreshCount = () => { $("#cartCount").textContent = count(); };
 
   document.addEventListener("click", e => {
+    const s = e.target.closest("[data-sw]"); if (!s) return;
+    const id = s.dataset.sw; elegido[id] = s.dataset.c;
+    document.querySelectorAll(`[data-sw="${CSS.escape(id)}"]`).forEach(x => x.setAttribute("aria-checked", x.dataset.c === elegido[id]));
+    document.querySelectorAll(`[data-swn="${CSS.escape(id)}"]`).forEach(x => { x.textContent = nombreColor(byId()[id], elegido[id]); x.classList.remove("warn"); });
+  });
+  document.addEventListener("click", e => {
     const b = e.target.closest("[data-add]"); if (!b) return;
-    const id = b.dataset.add; cart[id] = (cart[id] || 0) + 1; save(); refreshCount();
+    const id = b.dataset.add, p = byId()[id];
+    if ((p.colores || []).length && !elegido[id]) {
+      document.querySelectorAll(`[data-swn="${CSS.escape(id)}"]`).forEach(x => { x.textContent = "Elegí un color primero"; x.classList.add("warn"); });
+      toast("Elegí un color antes de agregar"); return;
+    }
+    const k = (p.colores || []).length ? `${id}|${elegido[id]}` : id;
+    cart[k] = (cart[k] || 0) + 1; save(); refreshCount();
     b.textContent = "✓ Agregado"; b.classList.add("done");
     setTimeout(() => { b.textContent = "Agregar"; b.classList.remove("done"); }, 1200);
-    toast(`${byId()[id].nombre} agregado al carrito`);
+    toast(`${nombreLinea(k)} agregado al carrito`);
   });
 
   let step = 1, pedido = null;
@@ -134,9 +159,9 @@
         $("#goShop").onclick = () => { closeCart(); location.hash = "tienda3d"; };
         return;
       }
-      body.innerHTML = Object.entries(cart).map(([id, q]) => { const p = ids[id]; return `
+      body.innerHTML = Object.entries(cart).map(([id, q]) => { const p = prod(id), col = parte(id).c; return `
         <div class="line">${thumb(p)}
-          <div><h4>${esc(p.nombre)}</h4><small>${money(p.precio)} c/u</small>
+          <div><h4>${esc(p.nombre)}</h4>${col ? `<small class="lc"><i style="--c:${col}"></i>${esc(nombreColor(p, col))}</small>` : ""}<small>${money(p.precio)} c/u</small>
             <div class="qty"><button type="button" data-q="-1" data-id="${esc(id)}" aria-label="Quitar uno">−</button><output>${q}</output><button type="button" data-q="1" data-id="${esc(id)}" aria-label="Agregar uno">+</button><button class="rm" type="button" data-rm="${esc(id)}">Quitar</button></div></div>
           <strong class="price">${money(p.precio * q)}</strong></div>`; }).join("");
       foot.innerHTML = `<div class="sum total"><span>Subtotal</span><span>${money(subtotal())}</span></div>
@@ -172,7 +197,7 @@
       const [pt, pd] = PAGOS()[datos.pago];
       body.innerHTML = `<div class="summary">
         <h4>Productos</h4>
-        ${Object.entries(cart).map(([id, q]) => `<div class="sum"><span>${q} × ${esc(ids[id].nombre)}</span><span>${money(ids[id].precio * q)}</span></div>`).join("")}
+        ${Object.entries(cart).map(([k, q]) => `<div class="sum"><span>${q} × ${esc(nombreLinea(k))}</span><span>${money(prod(k).precio * q)}</span></div>`).join("")}
         <div class="sum"><span>Envío</span><span>${envio() ? money(envio()) : "Sin cargo (retiro)"}</span></div>
         <div class="sum total"><span>Total</span><span>${money(subtotal() + envio())}</span></div>
         <h4>Entrega</h4><div>${datos.entrega === "envio" ? "Envío a " + esc(datos.direccion) : "Retiro en Ushuaia"}</div>
@@ -227,7 +252,7 @@
   function confirmar() {
     const ids = byId();
     const code = "VK-" + Date.now().toString(36).slice(-5).toUpperCase();
-    const lines = Object.entries(cart).map(([id, q]) => `• ${q} × ${ids[id].nombre} — ${money(ids[id].precio * q)}`);
+    const lines = Object.entries(cart).map(([k, q]) => `• ${q} × ${nombreLinea(k)} — ${money(prod(k).precio * q)}`);
     const msg = [
       `¡Hola Voltika! Quiero confirmar mi pedido ${code}:`, "", ...lines,
       envio() ? `• Envío Ushuaia — ${money(envio())}` : "• Retiro en Ushuaia",
